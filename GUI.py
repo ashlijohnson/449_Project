@@ -73,6 +73,10 @@ class SOSGame:
         tk.Radiobutton(red_frame, text="S", variable=self.red_choice, value='S').pack(anchor=tk.W)
         tk.Radiobutton(red_frame, text="O", variable=self.red_choice, value='O').pack(anchor=tk.W)
     
+        #reset game
+        new_game_btn = tk.Button(self.window, text = "New Game", command=self.new_game, font=('Arial', 12))
+        new_game_btn.grid(row=3, column=0, columnspan=3, pady=10)
+        
     def place_letter(self, row, col):
         #places selected letter on clicked board spot
         button =self.board[row][col]
@@ -90,6 +94,19 @@ class SOSGame:
         #switch player
         self.current_player = "Red" if self.current_player == "Blue" else "Blue"
         self.status_label.config(text=f"Current Turn: {self.current_player}")
+
+    def new_game(self):
+        #destroy existing board and reset
+        for widget in self.window.winfo_children():
+            widget.destroy()
+
+        self.board = []
+        self.current_player = "Blue"
+        self.blue_choice.set('S')
+        self.red_choice.set('S')
+        self.game_mode.set('Simple')
+
+        self.setup_menu()
 
 
 
