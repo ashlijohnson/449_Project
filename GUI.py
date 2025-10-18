@@ -38,6 +38,10 @@ class SOSGame:
         tk.Radiobutton(top_frame, text="Simple Game", variable=self.game_mode, value="Simple").pack(side=tk.LEFT)
         tk.Radiobutton(top_frame, text="General Game", variable=self.game_mode, value="General").pack(side=tk.LEFT)
 
+        #shows current player
+        self.status_label = tk.Label(self.window, text="Current Turn: Blue", font=('Arial', 12, 'bold'))
+        self.status_label.grid(row=2, column=0, columnspan=3, pady=10)
+
         #creates main frame
         main_frame = tk.Frame(self.window)
         main_frame.grid(row=1, column=0, columnspan=3)
@@ -72,8 +76,20 @@ class SOSGame:
     def place_letter(self, row, col):
         #places selected letter on clicked board spot
         button =self.board[row][col]
-        if button['text'] == '':
-            button.config(text=self.current_letter.get())
+        if button['text'] != '':
+            return #already placed
+        
+        #determine which letter to place based on current player
+        if self.current_player == "Blue":
+            letter = self.blue_choice.get()
+        else:
+            letter = self.red_choice.get()
+            
+        button.config(text=letter)
+
+        #switch player
+        self.current_player = "Red" if self.current_player == "Blue" else "Blue"
+        self.status_label.config(text=f"Current Turn: {self.current_player}")
 
 
 
