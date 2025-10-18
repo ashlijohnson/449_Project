@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import * 
 from tkinter import simpledialog
+from tkinter import messagebox
 
 
 class SOSGame:
@@ -21,22 +22,21 @@ class SOSGame:
         self.setup_menu()
 
     def setup_menu(self):
-        #asks for board size
-        self.size = simpledialog.askinteger("Board Size", "Enter board size", minvalue = 3, maxvalue = 10)
-        if not self.size:
+        dialog = GameSetupDialog(self.window)
+        if not dialog.result:
+            messagebox.showerror("Game Cancelled", "You must complete setup to start the game.")
             self.window.destroy()
             return
-        
+
+        self.size, mode = dialog.result
+        self.game_mode.set(mode)
+
         self.create_board()
 
     def create_board(self):
         #creates top frame with game mode 
         top_frame = tk.Frame(self.window, pady=10)
         top_frame.grid(row=0, column=0, columnspan=3)
-
-        tk.Label(top_frame, text = "Select Game Mode:").pack(side=tk.LEFT)
-        tk.Radiobutton(top_frame, text="Simple Game", variable=self.game_mode, value="Simple").pack(side=tk.LEFT)
-        tk.Radiobutton(top_frame, text="General Game", variable=self.game_mode, value="General").pack(side=tk.LEFT)
 
         #shows current player
         self.status_label = tk.Label(self.window, text="Current Turn: Blue", font=('Arial', 12, 'bold'))
@@ -76,7 +76,7 @@ class SOSGame:
         #reset game
         new_game_btn = tk.Button(self.window, text = "New Game", command=self.new_game, font=('Arial', 12))
         new_game_btn.grid(row=3, column=0, columnspan=3, pady=10)
-        
+
     def place_letter(self, row, col):
         #places selected letter on clicked board spot
         button =self.board[row][col]
@@ -108,6 +108,50 @@ class SOSGame:
 
         self.setup_menu()
 
+class GameSetupDialog:
+    def __init__(self, parent):
+        self.top = tk.Toplevel(parent)
+        self.top.title("Game Setup")
+        self.top.geometry("300x200")
+        self.top.resizable(False, False)
+        self.result = None  # Will store (size, mode)
+
+        tk.Label(self.top, text="Enter Board Size (3-10):", font=('Arial', 11)).pack(pady=(10, 5))
+        self.size_var = tk.StringVar()
+        self.size_entry = tk.Entry(self.top, textvariable=self.size_var)
+        self.size_entry.pack()
+
+        tk.Label(self.top, text="Select Game Mode:", font=('Arial', 11)).pack(pady=(15, 5))
+        self.mode_var = tk.StringVar(value="Simple")
+        tk.Radiobutton(self.top, text="Simple Game", variable=self.mode_var, value="Simple").pack(anchor='w', padx=30)
+        tk.Radiobutton(self.top, text="General Game", variable=self.mode_var, value="General").pack(anchor='w', padx=30)
+
+        button_frame = tk.Frame(self.top)
+        button_frame.pack(pady=15)
+
+        tk.Button(button_frame, text="OK", command=self.on_ok).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Cancel", command=self.on_cancel).pack(side=tk.RIGHT, padx=5)
+
+        # Center and block interaction
+        self.top.grab_set()
+        parent.wait_window(self.top)
+
+    def on_ok(self):
+        try:
+            size = int(self.size_var.get())
+            if size < 3 or size > 10:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Board size must be a number between 3 and 10.")
+            return
+
+        mode = self.mode_var.get()
+        self.result = (size, mode)
+        self.top.destroy()
+
+    def on_cancel(self):
+        self.result = None
+        self.top.destroy()
 
 
 
