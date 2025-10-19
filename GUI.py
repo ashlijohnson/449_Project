@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import * 
 from tkinter import simpledialog
 from tkinter import messagebox
 
@@ -140,7 +139,7 @@ class GameSetupDialog:
     def is_valid_board_size(self, value):
         try:
             size = int(value)
-            return 3 <= size <= 9
+            return 3 <= size <= 10
         except ValueError:
             return False   
 
@@ -148,9 +147,9 @@ class GameSetupDialog:
         #test board size is valid input
         try:
             size = int(value)
-            if 3 <= size <= 9:
+            if 3 <= size <= 10:
                 return True, size
-            return False, "Board size must be between 3 and 9."
+            return False, "Board size must be between 3 and 10."
         except ValueError:
             return False, "Invalid input: not a number."
     
@@ -165,7 +164,6 @@ class GameSetupDialog:
             return
         
         mode = self.mode_var.get()
-
         self.result = (size, mode)
         self.top.destroy()
 
