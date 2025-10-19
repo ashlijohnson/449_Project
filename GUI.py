@@ -81,6 +81,7 @@ class SOSGame:
         #places selected letter on clicked board spot
         button =self.board[row][col]
         if button['text'] != '':
+            messagebox.showerror("Invalid Move", "This spot is already taken!")
             return #already placed
         
         #determine which letter to place based on current player
@@ -114,7 +115,7 @@ class GameSetupDialog:
         self.top.title("Game Setup")
         self.top.geometry("300x200")
         self.top.resizable(False, False)
-        self.result = None  # Will store (size, mode)
+        self.result = None  #will store (size, mode)
 
         tk.Label(self.top, text="Enter Board Size (3-10):", font=('Arial', 11)).pack(pady=(10, 5))
         self.size_var = tk.StringVar()
@@ -132,11 +133,29 @@ class GameSetupDialog:
         tk.Button(button_frame, text="OK", command=self.on_ok).pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Cancel", command=self.on_cancel).pack(side=tk.RIGHT, padx=5)
 
-        # Center and block interaction
+        #center and block interaction
         self.top.grab_set()
         parent.wait_window(self.top)
 
+    def is_valid_board_size(self, value):
+        try:
+            size = int(value)
+            return 3 <= size <= 9
+        except ValueError:
+            return False   
+
+    def validate_board_size(value):
+        #test board size is valid input
+        try:
+            size = int(value)
+            if 3 <= size <= 9:
+                return True, size
+            return False, "Board size must be between 3 and 9."
+        except ValueError:
+            return False, "Invalid input: not a number."
+    
     def on_ok(self):
+        #when user clicks "OK"
         try:
             size = int(self.size_var.get())
             if size < 3 or size > 10:
@@ -144,12 +163,14 @@ class GameSetupDialog:
         except ValueError:
             messagebox.showerror("Invalid Input", "Board size must be a number between 3 and 10.")
             return
-
+        
         mode = self.mode_var.get()
+
         self.result = (size, mode)
         self.top.destroy()
 
     def on_cancel(self):
+        #when user clicks "Cancel"
         self.result = None
         self.top.destroy()
 
