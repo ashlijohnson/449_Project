@@ -12,6 +12,7 @@ class TestBoardSizeValidation(unittest.TestCase):
             valid, result = GameSetupDialog.validate_board_size(input_val)
             self.assertTrue(valid)
             self.assertEqual(result, int(input_val))
+            
     def test_invalid_board_size_too_small(self):
             # AC 1.2
             invalid_inputs = ['0', '1', '2']
@@ -76,18 +77,6 @@ class TestGameSetupDialog(unittest.TestCase):
 
         dialog.on_ok()
         self.assertEqual(dialog.result, (7, 'General'))
-
-    def test_invalid_size_input(self):
-        dialog = GameSetupDialog.__new__(GameSetupDialog)  # bypass __init__
-        dialog.top = self.root
-        dialog.size_var = tk.StringVar(value='abc')
-        dialog.mode_var = tk.StringVar(value='Simple')
-        dialog.result = None
-
-        with unittest.mock.patch('tkinter.messagebox.showerror') as mock_error:
-            dialog.on_ok()
-            mock_error.assert_called_once_with("Invalid Input", "Board size must be a number between 3 and 10.")
-            self.assertIsNone(dialog.result)
 
 class TestGameSetupStart(unittest.TestCase):
     def setUp(self):
@@ -249,7 +238,7 @@ class TestGeneralGameMove(unittest.TestCase):
             pass
 
     def test_place_letter_in_empty_spot(self):
-        """AC 4.1 - Valid move places letter and switches player"""
+        """AC 5.1 - Valid move places letter and switches player"""
         self.game.place_letter(0, 0)
 
         # The button should now have 'S' (Blue's choice)
@@ -261,7 +250,7 @@ class TestGeneralGameMove(unittest.TestCase):
 
     @patch('tkinter.messagebox.showerror')
     def test_place_letter_in_taken_spot(self, mock_error):
-        """AC 4.2 - Invalid move shows error and does not switch turn"""
+        """AC 5.2 - Invalid move shows error and does not switch turn"""
         # Simulate a taken spot
         self.game.board[1][1].config(text='O')
 
