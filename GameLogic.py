@@ -15,7 +15,7 @@ class BaseGameLogic:
         (-1, 1), (1, -1)
     ]
         count = 0
-        
+
         for dr, dc in directions:
             # case 1: current cell is in the middle (O)
             if self._is_sos(row - dr, col - dc, row, col, row + dr, col + dc):
@@ -43,22 +43,34 @@ class BaseGameLogic:
             self.board[r3][c3] == 'S'
         )
     
+    def is_board_full(self):
+        # determine if board is full 
+        for row in self.board:
+            for cell in row:
+                if cell == '':
+                    return False
+                
+        return True
+    
 class SimpleGameLogic(BaseGameLogic):
     # logic for a simple game winner
     def check_winner(self, player):
         if self.scores[player] > 0:
             self.winner = player
+        elif self.is_board_full() and not self.winner:
+            self.winner = "Draw"
         return self.winner
 
 class GeneralGameLogic(BaseGameLogic):
     # logic for a general game winner
     def check_winner(self, current_player):
-        Blue = self.scores['Blue']
-        Red = self.scores['Red']
-        if Red > Blue:
-            self.winner = 'Red'
-        elif Blue > Red:
-            self.winner = 'Blue'
-        else:
-            self.winner = 'Draw' 
+        if self.is_board_full():
+            Blue = self.scores['Blue']
+            Red = self.scores['Red']
+            if Red > Blue:
+                self.winner = 'Red'
+            elif Blue > Red:
+                self.winner = 'Blue'
+            else:
+                self.winner = 'Draw' 
         return self.winner
