@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import simpledialog
 from tkinter import messagebox
 from GameLogic import BaseGameLogic
+from GameLogic import SimpleGameLogic
+from GameLogic import GeneralGameLogic
 
 class SOSGame:
     def __init__(self, window):
@@ -9,6 +11,7 @@ class SOSGame:
         self.window = window
         self.window.title("SOS Game")
         self.window.geometry("600x600")
+        self.game_active = True
 
         self.board = []
         self.size = 0
@@ -83,7 +86,10 @@ class SOSGame:
         new_game_btn = tk.Button(self.window, text = "New Game", command=self.new_game, font=('Arial', 12))
         new_game_btn.grid(row=3, column=0, columnspan=3, pady=10)
 
-        self.logic = BaseGameLogic(self.size, self.board)
+        if self.game_mode.get() == 'Simple':
+            self.logic = SimpleGameLogic(self.size, self.board)
+        else:
+            self.logic = GeneralGameLogic(self.size, self.board)
         
     def place_letter(self, row, col):
         #places selected letter on clicked board spot
@@ -102,14 +108,37 @@ class SOSGame:
 
         #count any SOS sequences made by move
         new_sos = self.logic.check_sequences(row, col)
-        print(f"Player {self.current_player} placed {letter} at ({row},{col}), SOS sequences found: {new_sos}")
 
         if self.current_player == "Blue":
             self.blue_score += new_sos
             self.blue_score_label.config(text=f"Score: {self.blue_score}") 
+            self.logic.scores["Blue"] = self.blue_score
         else:
             self.red_score += new_sos
             self.red_score_label.config(text=f"Score: {self.red_score}") 
+            self.logic.scores["Red"] = self.red_score
+
+        #check for winner 
+        if self.game_mode.get() == 'Simple':
+            winner = self.logic.check_winner_simple(self.current_player)
+        else:
+            winner = self.logic.check_winner_general(self.current_player)
+
+        #game over
+        if winner:
+            self.game_active = False
+            if winner == "Draw":
+                response = messagebox.askyesno("Game Over", "It's a draw! Do you want to play again?")
+            else:
+                response = messagebox.askyesno("Game Over", f"{winner} wins! Do you want to play again?")
+            
+            if response:
+                self.new_game()
+            else:
+                for row in self.board:
+                    for btn in row:
+                        btn.config(state=tk.DISABLED)
+            return
 
         #switch player
         self.current_player = "Red" if self.current_player == "Blue" else "Blue"
@@ -125,6 +154,9 @@ class SOSGame:
         self.blue_choice.set('S')
         self.red_choice.set('S')
         self.game_mode.set('Simple')
+
+        self.blue_score = 0
+        self.red_score = 0
 
         self.setup_menu()
 

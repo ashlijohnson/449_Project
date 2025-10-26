@@ -42,7 +42,6 @@ class BaseGameLogic:
         l2=  self.board[r2][c2]['text'] 
         l3 = self.board[r3][c3]['text']
 
-        print(f" checking letters: {l1}, {l2}, {l3}")
         return (
             l1 == 'S' and
             l2 == 'O' and
@@ -53,9 +52,8 @@ class BaseGameLogic:
         # determine if board is full 
         for row in self.board:
             for cell in row:
-                if cell == '':
+                if cell['text'] == '':
                     return False
-                
         return True
     
 class SimpleGameLogic(BaseGameLogic):
