@@ -9,10 +9,10 @@ class BaseGameLogic:
     def check_sequences(self, row, col):
         # checks to see if an SOS sequence was made
         directions = [
-        (-1, 0), (1, 0),
-        (0, -1), (0, 1),
-        (-1, -1), (1, 1),
-        (-1, 1), (1, -1)
+        (1, 0),
+        (0, 1),
+        (1, 1),
+        (1, -1)
     ]
         count = 0
 
