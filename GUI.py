@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import simpledialog
 from tkinter import messagebox
-
+from GameLogic import BaseGameLogic
 
 class SOSGame:
     def __init__(self, window):
@@ -12,6 +12,9 @@ class SOSGame:
 
         self.board = []
         self.size = 0
+
+        self.blue_score = 0
+        self.red_score = 0
 
         self.current_player = "Blue"
         self.game_mode = tk.StringVar(value='Simple')
@@ -61,6 +64,8 @@ class SOSGame:
         #creates blue player's section
         blue_frame = tk.Frame(main_frame, padx=10, pady=10)
         blue_frame.grid(row=1, column=0, sticky='ns')
+        self.blue_score_label = tk.Label(blue_frame, text="Score: 0", font=('Arial', 12))
+        self.blue_score_label.pack(pady=5)
         tk.Label(blue_frame, text="Blue Player", font=('Arial', 12, 'bold')).pack(pady=5)
         tk.Radiobutton(blue_frame, text="S", variable=self.blue_choice, value='S').pack(anchor=tk.W)
         tk.Radiobutton(blue_frame, text="O", variable=self.blue_choice, value='O').pack(anchor=tk.W)
@@ -68,6 +73,8 @@ class SOSGame:
         #creates red player's section
         red_frame = tk.Frame(main_frame, padx=10, pady=10)
         red_frame.grid(row=1, column=2, sticky='ns')
+        self.red_score_label = tk.Label(red_frame, text="Score: 0", font=('Arial', 12))
+        self.red_score_label.pack(pady=5)
         tk.Label(red_frame, text="Red Player", font=('Arial', 12, 'bold')).pack(pady=5)
         tk.Radiobutton(red_frame, text="S", variable=self.red_choice, value='S').pack(anchor=tk.W)
         tk.Radiobutton(red_frame, text="O", variable=self.red_choice, value='O').pack(anchor=tk.W)
@@ -76,13 +83,15 @@ class SOSGame:
         new_game_btn = tk.Button(self.window, text = "New Game", command=self.new_game, font=('Arial', 12))
         new_game_btn.grid(row=3, column=0, columnspan=3, pady=10)
 
+        self.logic = BaseGameLogic(self.size, self.board)
+        
     def place_letter(self, row, col):
         #places selected letter on clicked board spot
         button =self.board[row][col]
         if button['text'] != '':
             messagebox.showerror("Invalid Move", "This spot is already taken!")
             return #already placed
-        
+
         #determine which letter to place based on current player
         if self.current_player == "Blue":
             letter = self.blue_choice.get()
@@ -90,6 +99,17 @@ class SOSGame:
             letter = self.red_choice.get()
             
         button.config(text=letter)
+
+        #count any SOS sequences made by move
+        new_sos = self.logic.check_sequences(row, col)
+        print(f"Player {self.current_player} placed {letter} at ({row},{col}), SOS sequences found: {new_sos}")
+
+        if self.current_player == "Blue":
+            self.blue_score += new_sos
+            self.blue_score_label.config(text=f"Score: {self.blue_score}") 
+        else:
+            self.red_score += new_sos
+            self.red_score_label.config(text=f"Score: {self.red_score}") 
 
         #switch player
         self.current_player = "Red" if self.current_player == "Blue" else "Blue"
@@ -107,6 +127,8 @@ class SOSGame:
         self.game_mode.set('Simple')
 
         self.setup_menu()
+
+
 
 class GameSetupDialog:
     def __init__(self, parent):
