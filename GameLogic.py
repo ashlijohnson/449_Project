@@ -3,9 +3,28 @@ class BaseGameLogic:
     def __init__(self, size, board):
         self.size = size
         self.board = board
-        self.scores = {'Blue': 0, 'Red': 0}
+        self._scores = {'Blue': 0, 'Red': 0}
         self.winner = None
 
+    def get_score(self, player):
+        return self._scores[player]
+    
+    def place_letter(self, row, col, letter, player):
+        if self.board[row][col] != '':
+            return 0, None 
+        
+        self.board[row][col] = letter
+        new_sos = self.check_sequences(row, col)
+        self._scores[player] += new_sos
+
+        winner = None
+        if hasattr(self, 'check_winner_simple'):
+            winner = self.check_winner_simple(player)
+        elif hasattr(self, 'check_winner_general'):
+            winner = self.check_winner_general(player)
+
+        return new_sos, winner
+        
     def check_sequences(self, row, col):
         # checks to see if an SOS sequence was made
         directions = [
@@ -38,9 +57,9 @@ class BaseGameLogic:
         if not (0 <= r3 < self.size and 0 <= c3 < self.size): 
             return False
         
-        l1 = self.board[r1][c1]['text'] 
-        l2=  self.board[r2][c2]['text'] 
-        l3 = self.board[r3][c3]['text']
+        l1 = self.board[r1][c1] 
+        l2=  self.board[r2][c2]
+        l3 = self.board[r3][c3]
 
         return (
             l1 == 'S' and
@@ -52,14 +71,14 @@ class BaseGameLogic:
         # determine if board is full 
         for row in self.board:
             for cell in row:
-                if cell['text'] == '':
+                if cell == '':
                     return False
         return True
     
 class SimpleGameLogic(BaseGameLogic):
     # logic for a simple game winner
     def check_winner_simple(self, player):
-        if self.scores[player] > 0:
+        if self.get_score(player) > 0:
             self.winner = player
         elif self.is_board_full() and not self.winner:
             self.winner = "Draw"
@@ -69,8 +88,8 @@ class GeneralGameLogic(BaseGameLogic):
     # logic for a general game winner
     def check_winner_general(self, current_player):
         if self.is_board_full():
-            Blue = self.scores['Blue']
-            Red = self.scores['Red']
+            Blue = self.get_score('Blue')
+            Red = self.get_score('Red')
             if Red > Blue:
                 self.winner = 'Red'
             elif Blue > Red:

@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog
 from tkinter import messagebox
-from GameLogic import BaseGameLogic
 from GameLogic import SimpleGameLogic
 from GameLogic import GeneralGameLogic
 
@@ -16,13 +14,12 @@ class SOSGame:
         self.board = []
         self.size = 0
 
-        self.blue_score = 0
-        self.red_score = 0
-
         self.current_player = "Blue"
         self.game_mode = tk.StringVar(value='Simple')
         self.blue_choice = tk.StringVar(value='S')
         self.red_choice = tk.StringVar(value='S')
+
+        self.logic_board = [['' for _ in range(self.size)] for _ in range(self.size)]
 
         self.setup_menu()
 
@@ -39,6 +36,9 @@ class SOSGame:
         self.create_board()
 
     def create_board(self):
+        self.board = []
+        self.logic_board = [[{'text': ''} for _ in range(self.size)] for _ in range(self.size)]
+
         #creates top frame with game mode 
         top_frame = tk.Frame(self.window, pady=10)
         top_frame.grid(row=0, column=0, columnspan=3)
@@ -59,7 +59,7 @@ class SOSGame:
             row_buttons = []
             for col in range(self.size):
                 btn = tk.Button(board_frame, text = '', width = 4, height = 2,
-                                command = lambda r=row, c=col: self.place_letter(r,c))
+                                command = lambda r=row, c=col: self.on_button_click(r,c))
                 btn.grid(row=row, column=col, padx=2, pady=2)
                 row_buttons.append(btn)
             self.board.append(row_buttons)
@@ -86,53 +86,32 @@ class SOSGame:
         new_game_btn = tk.Button(self.window, text = "New Game", command=self.new_game, font=('Arial', 12))
         new_game_btn.grid(row=3, column=0, columnspan=3, pady=10)
 
+        self.logic_board = [['' for _ in range(self.size)] for _ in range(self.size)]
         if self.game_mode.get() == 'Simple':
-            self.logic = SimpleGameLogic(self.size, self.board)
+            self.logic = SimpleGameLogic(self.size, self.logic_board)
         else:
-            self.logic = GeneralGameLogic(self.size, self.board)
-        
-    def place_letter(self, row, col):
-        #places selected letter on clicked board spot
-        button =self.board[row][col]
+            self.logic = GeneralGameLogic(self.size, self.logic_board)
+
+    def on_button_click(self, row, col):
+        if not self.game_active:
+            return
+        button = self.board[row][col]
         if button['text'] != '':
             messagebox.showerror("Invalid Move", "This spot is already taken!")
-            return #already placed
+            return
 
-        #determine which letter to place based on current player
-        if self.current_player == "Blue":
-            letter = self.blue_choice.get()
-        else:
-            letter = self.red_choice.get()
-            
+        letter = self.blue_choice.get() if self.current_player == "Blue" else self.red_choice.get()
+
         button.config(text=letter)
 
-        #count any SOS sequences made by move
-        new_sos = self.logic.check_sequences(row, col)
+        new_sos, winner = self.logic.place_letter(row, col, letter, self.current_player)
 
-        if self.current_player == "Blue":
-            self.blue_score += new_sos
-            self.blue_score_label.config(text=f"Score: {self.blue_score}") 
-            self.logic.scores["Blue"] = self.blue_score
-        else:
-            self.red_score += new_sos
-            self.red_score_label.config(text=f"Score: {self.red_score}") 
-            self.logic.scores["Red"] = self.red_score
-
-        #check for winner 
-        if self.game_mode.get() == 'Simple':
-            winner = self.logic.check_winner_simple(self.current_player)
-        else:
-            winner = self.logic.check_winner_general(self.current_player)
-
-        #game over
+        self.update_scores()
+       
         if winner:
             self.game_active = False
-            if winner == "Draw":
-                response = messagebox.askyesno("Game Over", "It's a draw! Do you want to play again?")
-            else:
-                response = messagebox.askyesno("Game Over", f"{winner} wins! Do you want to play again?")
-            
-            if response:
+            msg = f"{winner} wins!" if winner != "Draw" else "It's a draw!"
+            if messagebox.askyesno("Game Over", f"{msg} Play again?"):
                 self.new_game()
             else:
                 for row in self.board:
@@ -140,8 +119,14 @@ class SOSGame:
                         btn.config(state=tk.DISABLED)
             return
 
-        #switch player
-        self.current_player = "Red" if self.current_player == "Blue" else "Blue"
+        self.switch_player()    
+
+    def update_scores(self):
+        self.blue_score_label.config(text=f"Score: {self.logic.get_score('Blue')}")
+        self.red_score_label.config(text=f"Score: {self.logic.get_score('Red')}")
+   
+    def switch_player(self):
+        self.current_player = "Red" if self.current_player=='Blue' else "Blue"
         self.status_label.config(text=f"Current Turn: {self.current_player}")
 
     def new_game(self):
@@ -154,10 +139,16 @@ class SOSGame:
         self.blue_choice.set('S')
         self.red_choice.set('S')
         self.game_mode.set('Simple')
+        self.game_active = True
 
-        self.blue_score = 0
-        self.red_score = 0
-
+        if hasattr(self, 'logic'):
+            self.logic._scores = {'Blue': 0, 'Red': 0}
+            self.logic.winner = None
+        if self.game_mode.get() == 'Simple':
+           self.logic = SimpleGameLogic(self.size, [['' for _ in range(self.size)] for _ in range(self.size)])
+        else:
+            self.logic = GeneralGameLogic(self.size, [['' for _ in range(self.size)] for _ in range(self.size)])
+        
         self.setup_menu()
 
 
