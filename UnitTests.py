@@ -3,6 +3,7 @@ from GUI import GameSetupDialog
 from GUI import SOSGame
 from unittest.mock import patch
 import tkinter as tk
+from GameLogic import SimpleGameLogic, GeneralGameLogic
 
 class TestBoardSizeValidation(unittest.TestCase):
     def test_valid_board_size(self):
@@ -178,6 +179,7 @@ class TestSimpleGameMove(unittest.TestCase):
 
     def test_place_letter_in_empty_spot(self):
         """AC 4.1 - Valid move places letter and switches player"""
+        
         self.game.place_letter(0, 0)
 
         # The button should now have 'S' (Blue's choice)
@@ -265,6 +267,64 @@ class TestGeneralGameMove(unittest.TestCase):
 
         # The button text should still be 'O'
         self.assertEqual(self.game.board[1][1]['text'], 'O')
+
+def make_board(size, fill=''):
+    # helper to make board
+    return [[{'text': fill} for _ in range(size)] for _ in range(size)]
+
+class EndSimpleGameLogic(unittest.TestCase):
+
+    def set_up(self):
+        # creates simple game logic instance before test
+        self.size = 3
+        self.board = make_board(self.size)
+        self.logic = SimpleGameLogic(self.size, self.board)
+
+    def player_gets_sos_game_ends(self):
+        # AC 5.1
+
+        self.board[1][0]['text'] = 'S'
+        self.board[1][1]['text'] = 'O'
+        self.board[1][2]['text'] = 'S'
+
+        new_sos = self.logic.check_sequences(1,1)
+        self.logic.scores['Blue'] += new_sos
+
+        winner = self.logic.check_winner_simple('Blue')
+
+        self.assertGreater(new_sos, 0)
+        self.assertEqual(winner, 'Blue')
+        self.assertEqual(logic.winner, 'Blue')
+
+    def player_does_not_get_sos(self):
+        # AC 5.2 
+
+        self.board[0][0]['text'] = 'S'
+        self.board[0][1]['text'] = 'O'
+        self.board[1][1]['text'] = 'S'  
+
+        logic = SimpleGameLogic(3, board)
+        new_sos = logic.check_sequences(1, 1)
+        logic.scores['Red'] += new_sos
+
+        winner = logic.check_winner_simple('Red')
+
+        self.assertEqual(new_sos, 0)
+        self.assertIsNone(winner)
+        self.assertIsNone(logic.winner)
+
+    def board_full_no_sos_draw(self):
+        # AC 5.3 
+        board = make_board(3, fill='O')
+        logic = SimpleGameLogic(3, board)
+
+        self.assertTrue(logic.is_board_full())
+
+        winner = logic.check_winner_simple('Blue')
+
+        self.assertEqual(winner, 'Draw')
+        self.assertEqual(logic.winner, 'Draw')
+
 
 if __name__ == "__main__":
     unittest.main()
