@@ -149,7 +149,6 @@ class TestSimpleGameMove(unittest.TestCase):
     def setUp(self):
         self.root = tk.Tk()
         self.root.withdraw()
-
         # Create game manually to control setup
         self.game = SOSGame.__new__(SOSGame)
         self.game.window = self.root
@@ -157,7 +156,11 @@ class TestSimpleGameMove(unittest.TestCase):
         self.game.blue_choice = tk.StringVar(value='S')
         self.game.red_choice = tk.StringVar(value='O')
         self.game.game_mode = tk.StringVar(value='Simple')
+        self.game.blue_score = 0
+        self.game.red_score = 0
         self.game.size = 3
+        self.game.blue_score_label = tk.Label(self.root)
+        self.game.red_score_label = tk.Label(self.root)
 
         # Create a dummy board: 3x3 buttons
         self.game.board = []
@@ -171,6 +174,8 @@ class TestSimpleGameMove(unittest.TestCase):
         # Create dummy label for status
         self.game.status_label = tk.Label(self.root)
 
+        self.game.logic = SimpleGameLogic(self.game.size, self.game.board)
+
     def tearDown(self):
         try:
             self.root.destroy()
@@ -179,7 +184,7 @@ class TestSimpleGameMove(unittest.TestCase):
 
     def test_place_letter_in_empty_spot(self):
         """AC 4.1 - Valid move places letter and switches player"""
-        
+        self.logic = SimpleGameLogic(self.game.size, self.game.board)
         self.game.place_letter(0, 0)
 
         # The button should now have 'S' (Blue's choice)
@@ -219,7 +224,11 @@ class TestGeneralGameMove(unittest.TestCase):
         self.game.blue_choice = tk.StringVar(value='S')
         self.game.red_choice = tk.StringVar(value='O')
         self.game.game_mode = tk.StringVar(value='General')
+        self.game.blue_score = 0
+        self.game.red_score = 0
         self.game.size = 3
+        self.game.blue_score_label = tk.Label(self.root)
+        self.game.red_score_label = tk.Label(self.root)
 
         # Create a dummy board: 3x3 buttons
         self.game.board = []
@@ -233,6 +242,7 @@ class TestGeneralGameMove(unittest.TestCase):
         # Create dummy label for status
         self.game.status_label = tk.Label(self.root)
 
+        self.game.logic = GeneralGameLogic(self.game.size, self.game.board)
     def tearDown(self):
         try:
             self.root.destroy()
@@ -240,7 +250,7 @@ class TestGeneralGameMove(unittest.TestCase):
             pass
 
     def test_place_letter_in_empty_spot(self):
-        """AC 5.1 - Valid move places letter and switches player"""
+        """AC 6.1 - Valid move places letter and switches player"""
         self.game.place_letter(0, 0)
 
         # The button should now have 'S' (Blue's choice)
@@ -252,7 +262,7 @@ class TestGeneralGameMove(unittest.TestCase):
 
     @patch('tkinter.messagebox.showerror')
     def test_place_letter_in_taken_spot(self, mock_error):
-        """AC 5.2 - Invalid move shows error and does not switch turn"""
+        """AC 6.2 - Invalid move shows error and does not switch turn"""
         # Simulate a taken spot
         self.game.board[1][1].config(text='O')
 
@@ -282,7 +292,6 @@ class EndSimpleGameLogic(unittest.TestCase):
 
     def player_gets_sos_game_ends(self):
         # AC 5.1
-
         self.board[1][0]['text'] = 'S'
         self.board[1][1]['text'] = 'O'
         self.board[1][2]['text'] = 'S'
@@ -294,24 +303,22 @@ class EndSimpleGameLogic(unittest.TestCase):
 
         self.assertGreater(new_sos, 0)
         self.assertEqual(winner, 'Blue')
-        self.assertEqual(logic.winner, 'Blue')
+        self.assertEqual(self.logic.winner, 'Blue')
 
     def player_does_not_get_sos(self):
         # AC 5.2 
-
         self.board[0][0]['text'] = 'S'
         self.board[0][1]['text'] = 'O'
         self.board[1][1]['text'] = 'S'  
 
-        logic = SimpleGameLogic(3, board)
-        new_sos = logic.check_sequences(1, 1)
-        logic.scores['Red'] += new_sos
+        new_sos = self.logic.check_sequences(1, 1)
+        self.logic.scores['Red'] += new_sos
 
-        winner = logic.check_winner_simple('Red')
+        winner = self.logic.check_winner_simple('Red')
 
         self.assertEqual(new_sos, 0)
         self.assertIsNone(winner)
-        self.assertIsNone(logic.winner)
+        self.assertIsNone(self.logic.winner)
 
     def board_full_no_sos_draw(self):
         # AC 5.3 
@@ -324,6 +331,38 @@ class EndSimpleGameLogic(unittest.TestCase):
 
         self.assertEqual(winner, 'Draw')
         self.assertEqual(logic.winner, 'Draw')
+
+class EndGeneralGameLogic(unittest.TestCase):
+    
+    def setUp(self):
+        # creates a general game logic instance before each test
+        self.size = 3
+        self.board = make_board(self.size)
+        self.logic = GeneralGameLogic(self.size, self.board)
+
+    def one_player_has_more_sos_sequences(self):
+        # AC 7.1
+        self.logic.scores = {'Blue': 3, 'Red': 1}
+        full_board = make_board(self.size, fill = 'S')
+        self.logic.board = full_board
+
+        self.assertTrue(self.logic.is_board_full())
+        winner = self.logic.check_winner_general('Blue')
+
+        self.assertEqual(winner, 'Blue')
+        self.assertEqual(self.logic.winner, 'Blue')
+
+    def both_players_same_number_of_sequences(self):
+        # AC 7.2
+        self.logic.scores = {'Blue': 2, 'Red': 2}
+        full_board = make_board(self.size, fill='O')
+        self.logic.board = full_board
+
+        self.assertTrue(self.logic.is_board_full())
+        winner = self.logic.check_winner_general('Red')
+
+        self.assertEqual(winner, 'Draw')
+        self.assertEqual(self.logic.winner, 'Draw')
 
 
 if __name__ == "__main__":
