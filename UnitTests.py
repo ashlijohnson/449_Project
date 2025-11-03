@@ -151,6 +151,7 @@ class TestSimpleGameMove(unittest.TestCase):
         self.root.withdraw()
         # Create game manually to control setup
         self.game = SOSGame.__new__(SOSGame)
+        self.game.game_active = True
         self.game.window = self.root
         self.game.current_player = "Blue"
         self.game.blue_choice = tk.StringVar(value='S')
@@ -185,7 +186,7 @@ class TestSimpleGameMove(unittest.TestCase):
     def test_place_letter_in_empty_spot(self):
         """AC 4.1 - Valid move places letter and switches player"""
         self.logic = SimpleGameLogic(self.game.size, self.game.board)
-        self.game.place_letter(0, 0)
+        self.game.on_button_click(0, 0)
 
         # The button should now have 'S' (Blue's choice)
         self.assertEqual(self.game.board[0][0]['text'], 'S')
@@ -201,7 +202,7 @@ class TestSimpleGameMove(unittest.TestCase):
         self.game.board[1][1].config(text='O')
 
         # Blue tries to play on the same spot
-        self.game.place_letter(1, 1)
+        self.game.on_button_click(1, 1)
 
         # Error should be shown
         mock_error.assert_called_once_with("Invalid Move", "This spot is already taken!")
@@ -219,6 +220,7 @@ class TestGeneralGameMove(unittest.TestCase):
 
         # Create game manually to control setup
         self.game = SOSGame.__new__(SOSGame)
+        self.game.game_active = True
         self.game.window = self.root
         self.game.current_player = "Blue"
         self.game.blue_choice = tk.StringVar(value='S')
@@ -251,7 +253,7 @@ class TestGeneralGameMove(unittest.TestCase):
 
     def test_place_letter_in_empty_spot(self):
         """AC 6.1 - Valid move places letter and switches player"""
-        self.game.place_letter(0, 0)
+        self.game.on_button_click(0, 0)
 
         # The button should now have 'S' (Blue's choice)
         self.assertEqual(self.game.board[0][0]['text'], 'S')
@@ -267,7 +269,7 @@ class TestGeneralGameMove(unittest.TestCase):
         self.game.board[1][1].config(text='O')
 
         # Blue tries to play on the same spot
-        self.game.place_letter(1, 1)
+        self.game.on_button_click(1, 1)
 
         # Error should be shown
         mock_error.assert_called_once_with("Invalid Move", "This spot is already taken!")
