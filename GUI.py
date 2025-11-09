@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from GameLogic import SimpleGameLogic
 from GameLogic import GeneralGameLogic
+from ComputerPlayer import ComputerPlayer, HumanPlayer
 
 class SOSGame:
     def __init__(self, window):
@@ -30,8 +31,18 @@ class SOSGame:
             self.window.destroy()
             return
 
-        self.size, mode = dialog.result
+        self.size, mode, blue_type, red_type = dialog.result
         self.game_mode.set(mode)
+        
+        if blue_type == "Computer":
+            self.blue_player = ComputerPlayer("Blue")
+        else: 
+            self.blue_player = HumanPlayer("Blue")
+
+        if red_type == "Computer":
+            self.red_player = ComputerPlayer("Red")
+        else: 
+            self.red_player = HumanPlayer("Red")
 
         self.create_board()
 
@@ -91,6 +102,8 @@ class SOSGame:
             self.logic = SimpleGameLogic(self.size, self.logic_board)
         else:
             self.logic = GeneralGameLogic(self.size, self.logic_board)
+
+        
 
     def on_button_click(self, row, col):
         if not self.game_active:
@@ -157,7 +170,7 @@ class GameSetupDialog:
     def __init__(self, parent):
         self.top = tk.Toplevel(parent)
         self.top.title("Game Setup")
-        self.top.geometry("300x200")
+        self.top.geometry("300x500")
         self.top.resizable(False, False)
         self.result = None  #will store (size, mode)
 
@@ -170,6 +183,16 @@ class GameSetupDialog:
         self.mode_var = tk.StringVar(value="Simple")
         tk.Radiobutton(self.top, text="Simple Game", variable=self.mode_var, value="Simple").pack(anchor='w', padx=30)
         tk.Radiobutton(self.top, text="General Game", variable=self.mode_var, value="General").pack(anchor='w', padx=30)
+
+        tk.Label(self.top, text= "Blue Player:", font=('Arial', 11)).pack(pady=(15, 5))
+        self.blue_type = tk.StringVar(value= "Human")
+        tk.Radiobutton(self.top, text="Human", variable=self.blue_type, value="Human").pack(anchor='w', padx=30)
+        tk.Radiobutton(self.top, text="Computer", variable=self.blue_type, value="Computer").pack(anchor='w', padx=30)
+        
+        tk.Label(self.top, text= "Red Player:", font=('Arial', 11)).pack(pady=(15, 5))
+        self.red_type = tk.StringVar(value= "Human")
+        tk.Radiobutton(self.top, text="Human", variable=self.red_type, value="Human").pack(anchor='w', padx=30)
+        tk.Radiobutton(self.top, text="Computer", variable=self.red_type, value="Computer").pack(anchor='w', padx=30)
 
         button_frame = tk.Frame(self.top)
         button_frame.pack(pady=15)
@@ -209,6 +232,8 @@ class GameSetupDialog:
             return
         
         mode = self.mode_var.get()
+        blue_player_type = self.blue_type.get()
+        red_player_type = self.red_type.get()
         self.result = (size, mode)
         self.top.destroy()
 

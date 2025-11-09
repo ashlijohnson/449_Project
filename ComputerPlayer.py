@@ -1,33 +1,29 @@
-from GameLogic import BaseGameLogic
+from abc import ABC, abstractmethod
+import random 
 
-class ComputerPlayer(BaseGameLogic):
-    def __init__(self, size, autoplayer):
-        board = [['' for _ in range(size)] for _ in range(size)]
-        super().__init__(size, board)
-        self.autoplayer = autoplayer
-        self.current_player = 'Blue'
+class Player(ABC):
+    def __init__(self, color):
+        self.color = color
 
-        # if computer is starting player, move first automatically
-        if self.current_player == autoplayer:
-            self.make_move_auto()
+    @abstractmethod
+    def make_move(self, game_logic):
+        pass
+        
+class HumanPlayer(Player):
+    def make_move(self, game_logic):
+        pass
 
-    def reset_game(self):
-        self.board = [['' for _ in range(self.size)] for _ in range(self.size)]
-        self._scores = {'Blue': 0, 'Red': 0}
-        self.winner = None
-        self.current_player = 'Blue'
-
-        if self.current_player == self.autoplayer:
-            self.make_auto_move()
-
-    def make_move(self, row, col, letter):
-        # human or auto player makes a move
-        new_sos, winner = super().place_letter(row, col, letter, self.current_player)
-
-        if self.winner is None and self.current_player == self.autoplayer:
-            self.make_auto_move()
-
-        return new_sos, winner
-    
-    
+class ComputerPlayer(Player):
+    def make_move(self, game_logic):
+        size = game_logic.size
+        empty_cells = [(r, c) for r in range(size)
+                       for c in range(size)
+                       if game_logic.board[r][c] == '']
+        if not empty_cells:
+            return None
+        
+        row, col = random.choice(empty_cells)
+        letter = random.choice(['S', 'O'])
+        new_sos, winner = game_logic.placeletter(row, col, letter, self.color)
+        return (row, col, letter, winner)
 
