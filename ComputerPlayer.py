@@ -10,8 +10,8 @@ class Player(ABC):
         pass
         
 class HumanPlayer(Player):
-    def make_move(self, game_logic):
-        pass
+    def make_move(self, game_logic, current_player):
+        return None
 
 class ComputerPlayer(Player):
     def make_move(self, logic_board, current_player):

@@ -106,6 +106,8 @@ class SOSGame:
         if self.current_player == "Blue" and isinstance(self.blue_player, ComputerPlayer):
             self.window.after(500, self.computer_move)
 
+        self.play_turn()
+
     def on_button_click(self, row, col):
         if not self.game_active:
             return
@@ -148,13 +150,7 @@ class SOSGame:
         self.current_player = "Red" if self.current_player=='Blue' else "Blue"
         self.status_label.config(text=f"Current Turn: {self.current_player}")
 
-        if self.current_player == "Blue":
-            next_player_obj = self.blue_player
-        else:
-            next_player_obj = self.red_player
-        if isinstance(next_player_obj, ComputerPlayer):
-            self.window.after(500, self.computer_move)
-
+        self.play_turn()
 
     def computer_move(self):
         if not self.game_active:
@@ -165,9 +161,30 @@ class SOSGame:
         else:
             current_player_obj = self.red_player
 
-        row, col, letter = current_player_obj.make_move(self.logic.board, self.current_player)
-        if row is not None:
-            self.handle_move(row, col, letter)
+        move = current_player_obj.make_move(self.logic.board, self.current_player)
+        if move is None:
+            if self.logic.is_board_full():
+                self.end_game("Draw")
+            return
+        
+        row, col, letter = move
+        self.handle_move(row, col, letter)
+
+
+    def play_turn(self):
+        if self.current_player == "Blue":
+            player = self.blue_player
+        else:
+            player = self.red_player
+
+        if isinstance(player, HumanPlayer):
+            return
+        else:
+            move = player.make_move(self.logic.board, self.current_player)
+            if move is not None:
+                row, col, letter = move
+                self.handle_move(row, col, letter)
+
 
     def end_game(self, winner):
         self.game_active = False
