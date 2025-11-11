@@ -16,7 +16,7 @@ class BaseGameLogic:
         self.board[row][col] = letter
         new_sos = self.check_sequences(row, col)
         self._scores[player] += new_sos
-
+        print(f" Placed {letter}. SOS found: {new_sos}")
         winner = None
         if hasattr(self, 'check_winner_simple'):
             winner = self.check_winner_simple(player)

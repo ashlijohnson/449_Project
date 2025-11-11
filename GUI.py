@@ -48,7 +48,7 @@ class SOSGame:
 
     def create_board(self):
         self.board = []
-        self.logic_board = [[{'text': ''} for _ in range(self.size)] for _ in range(self.size)]
+        self.logic_board = [['' for _ in range(self.size)] for _ in range(self.size)]
 
         #creates top frame with game mode 
         top_frame = tk.Frame(self.window, pady=10)
@@ -130,7 +130,6 @@ class SOSGame:
             return
         
         button.config(text=letter)
-        self.logic_board[row][col] = letter
 
         new_sos, winner = self.logic.place_letter(row, col, letter, self.current_player)
         self.update_scores()
@@ -158,6 +157,9 @@ class SOSGame:
 
 
     def computer_move(self):
+        if not self.game_active:
+            return
+        
         if self.current_player == "Blue":
             current_player_obj = self.blue_player
         else:
@@ -169,7 +171,7 @@ class SOSGame:
 
     def end_game(self, winner):
         self.game_active = False
-        if winner != "Draw":
+        if winner == "Draw":
             msg = "It's a draw!"
         else:
             msg = f"{winner} wins!"
