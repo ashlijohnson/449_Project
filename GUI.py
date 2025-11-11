@@ -164,7 +164,7 @@ class SOSGame:
         else:
             player = self.red_player
             
-        move = player.make_move(self.logic.board, self.current_player)
+        move = player.make_move(self.logic, self.current_player)
 
         if move is None:
             if self.logic.is_board_full():
@@ -178,7 +178,7 @@ class SOSGame:
         if not self.game_active:
             return
 
-        move = player_obj.make_move(self.logic.board, self.current_player)
+        move = player_obj.make_move(self.logic, self.current_player)
         
         if move is None:
             if self.logic.is_board_full():
