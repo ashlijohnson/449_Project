@@ -103,36 +103,43 @@ class SOSGame:
         else:
             self.logic = GeneralGameLogic(self.size, self.logic_board)
 
-        
+        if self.current_player == "Blue" and isinstance(self.blue_player, ComputerPlayer):
+            self.window.after(500, self.computer_move)
 
     def on_button_click(self, row, col):
         if not self.game_active:
             return
+        
+        if self.current_player == "Blue":
+            current_player_obj = self.blue_player
+        else:
+            current_player_obj = self.red_player
+        
+        if isinstance(current_player_obj, ComputerPlayer):
+            return
+        
+        if self.current_player == "Blue":
+            self.handle_move(row, col, self.blue_choice.get())
+        else:
+            self.handle_move(row, col, self.red_choice.get())
+
+    def handle_move(self, row, col, letter):
         button = self.board[row][col]
         if button['text'] != '':
             messagebox.showerror("Invalid Move", "This spot is already taken!")
             return
-
-        letter = self.blue_choice.get() if self.current_player == "Blue" else self.red_choice.get()
-
+        
         button.config(text=letter)
+        self.logic_board[row][col] = letter
 
         new_sos, winner = self.logic.place_letter(row, col, letter, self.current_player)
-
         self.update_scores()
-       
-        if winner:
-            self.game_active = False
-            msg = f"{winner} wins!" if winner != "Draw" else "It's a draw!"
-            if messagebox.askyesno("Game Over", f"{msg} Play again?"):
-                self.new_game()
-            else:
-                for row in self.board:
-                    for btn in row:
-                        btn.config(state=tk.DISABLED)
-            return
 
-        self.switch_player()    
+        if winner:
+            self.end_game(winner)
+            return
+        
+        self.switch_player()
 
     def update_scores(self):
         self.blue_score_label.config(text=f"Score: {self.logic.get_score('Blue')}")
@@ -141,6 +148,38 @@ class SOSGame:
     def switch_player(self):
         self.current_player = "Red" if self.current_player=='Blue' else "Blue"
         self.status_label.config(text=f"Current Turn: {self.current_player}")
+
+        if self.current_player == "Blue":
+            next_player_obj = self.blue_player
+        else:
+            next_player_obj = self.red_player
+        if isinstance(next_player_obj, ComputerPlayer):
+            self.window.after(500, self.computer_move)
+
+
+    def computer_move(self):
+        if self.current_player == "Blue":
+            current_player_obj = self.blue_player
+        else:
+            current_player_obj = self.red_player
+
+        row, col, letter = current_player_obj.make_move(self.logic.board, self.current_player)
+        if row is not None:
+            self.handle_move(row, col, letter)
+
+    def end_game(self, winner):
+        self.game_active = False
+        if winner != "Draw":
+            msg = "It's a draw!"
+        else:
+            msg = f"{winner} wins!"
+
+        if messagebox.askyesno("Game Over", f"{msg} Play again?"):
+            self.new_game()
+        else:
+            for row in self.board:
+                for btn in row:
+                    btn.config(state=tk.DISABLED)
 
     def new_game(self):
         #destroy existing board and reset
@@ -234,7 +273,7 @@ class GameSetupDialog:
         mode = self.mode_var.get()
         blue_player_type = self.blue_type.get()
         red_player_type = self.red_type.get()
-        self.result = (size, mode)
+        self.result = (size, mode, blue_player_type, red_player_type)
         self.top.destroy()
 
     def on_cancel(self):

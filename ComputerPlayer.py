@@ -14,16 +14,15 @@ class HumanPlayer(Player):
         pass
 
 class ComputerPlayer(Player):
-    def make_move(self, game_logic):
-        size = game_logic.size
+    def make_move(self, logic_board, current_player):
+        size = len(logic_board)
         empty_cells = [(r, c) for r in range(size)
                        for c in range(size)
-                       if game_logic.board[r][c] == '']
+                       if logic_board[r][c] == '']
         if not empty_cells:
             return None
         
         row, col = random.choice(empty_cells)
         letter = random.choice(['S', 'O'])
-        new_sos, winner = game_logic.placeletter(row, col, letter, self.color)
-        return (row, col, letter, winner)
+        return row, col, letter
 
