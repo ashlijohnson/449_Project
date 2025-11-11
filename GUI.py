@@ -136,8 +136,11 @@ class SOSGame:
         new_sos, winner = self.logic.place_letter(row, col, letter, self.current_player)
         self.update_scores()
 
-        if winner:
+        if winner is not None:
             self.end_game(winner)
+            return
+        elif self.logic.is_board_full():
+            self.end_game("Draw")
             return
         
         self.switch_player()
@@ -157,19 +160,33 @@ class SOSGame:
             return
         
         if self.current_player == "Blue":
-            current_player_obj = self.blue_player
+             player = self.blue_player
         else:
-            current_player_obj = self.red_player
+            player = self.red_player
+            
+        move = player.make_move(self.logic.board, self.current_player)
 
-        move = current_player_obj.make_move(self.logic.board, self.current_player)
         if move is None:
             if self.logic.is_board_full():
                 self.end_game("Draw")
             return
-        
-        row, col, letter = move
+
+        row, col, letter = move 
         self.handle_move(row, col, letter)
 
+    def perform_computer_move(self, player_obj):
+        if not self.game_active:
+            return
+
+        move = player_obj.make_move(self.logic.board, self.current_player)
+        
+        if move is None:
+            if self.logic.is_board_full():
+                self.end_game("Draw")
+            return
+
+        row, col, letter = move
+        self.handle_move(row, col, letter)
 
     def play_turn(self):
         if self.current_player == "Blue":
@@ -180,10 +197,8 @@ class SOSGame:
         if isinstance(player, HumanPlayer):
             return
         else:
-            move = player.make_move(self.logic.board, self.current_player)
-            if move is not None:
-                row, col, letter = move
-                self.handle_move(row, col, letter)
+            self.window.after(500, lambda: self.computer_move())
+
 
 
     def end_game(self, winner):
