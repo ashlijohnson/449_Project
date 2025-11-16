@@ -15,7 +15,6 @@ class HumanPlayer(Player):
         return None
 
 class ComputerPlayer(Player):
-
     def make_move(self, game_logic, current_player):
         move = self.make_winning_move(game_logic, current_player)
         if move:

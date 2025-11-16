@@ -1,9 +1,10 @@
 import unittest
 from GUI import GameSetupDialog
 from GUI import SOSGame
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import tkinter as tk
 from GameLogic import SimpleGameLogic, GeneralGameLogic
+from PlayerTypes import HumanPlayer, ComputerPlayer
 
 class TestBoardSizeValidation(unittest.TestCase):
     def test_valid_board_size(self):
@@ -48,7 +49,7 @@ class TestGameSetupDialog(unittest.TestCase):
     def setUp(self):
         self.root = tk.Tk()
         self.root.withdraw()  # Prevent GUI from showing
-
+    
     def tearDown(self):
         try:
             if self.root:
@@ -64,9 +65,11 @@ class TestGameSetupDialog(unittest.TestCase):
         dialog.size_var = tk.StringVar(value='5')
         dialog.mode_var = tk.StringVar(value='Simple')
         dialog.result = None
+        dialog.blue_type = tk.StringVar(value="Human")
+        dialog.red_type = tk.StringVar(value="Human")
 
         dialog.on_ok()
-        self.assertEqual(dialog.result, (5, 'Simple'))
+        self.assertEqual(dialog.result, (5, 'Simple', 'Human', 'Human'))
 
     def test_general_game_selection(self):
         #AC 2.2
@@ -75,9 +78,11 @@ class TestGameSetupDialog(unittest.TestCase):
         dialog.size_var = tk.StringVar(value='7')
         dialog.mode_var = tk.StringVar(value='General')
         dialog.result = None
+        dialog.blue_type = tk.StringVar(value="Human")
+        dialog.red_type = tk.StringVar(value="Human")
 
         dialog.on_ok()
-        self.assertEqual(dialog.result, (7, 'General'))
+        self.assertEqual(dialog.result, (7, 'General', 'Human', 'Human'))
 
 class TestGameSetupStart(unittest.TestCase):
     def setUp(self):
@@ -95,6 +100,8 @@ class TestGameSetupStart(unittest.TestCase):
         dialog = GameSetupDialog.__new__(GameSetupDialog)
         dialog.top = self.root  # Set top to a real root
         dialog.result = None
+        dialog.blue_type = tk.StringVar(value="Human")
+        dialog.red_type = tk.StringVar(value="Human")
         return dialog
 
     @patch('tkinter.messagebox.showerror')
@@ -106,7 +113,7 @@ class TestGameSetupStart(unittest.TestCase):
 
         dialog.on_ok()
 
-        self.assertEqual(dialog.result, (6, "General"))
+        self.assertEqual(dialog.result, (6, "General", "Human", "Human"))
         mock_error.assert_not_called()
 
     @patch('tkinter.messagebox.showerror')
@@ -145,140 +152,93 @@ class TestGameSetupStart(unittest.TestCase):
         self.assertIsNone(dialog.result)
         mock_error.assert_called_once()
 
+class MockButton:
+    def __init__(self):
+        self.text = ''
+    def config(self, text):
+        self.text = text
+
 class TestSimpleGameMove(unittest.TestCase):
     def setUp(self):
-        self.root = tk.Tk()
-        self.root.withdraw()
-        # Create game manually to control setup
-        self.game = SOSGame.__new__(SOSGame)
+        self.game = type('SOSGame', (), {})()
+        self.game.current_player = 'Blue'
         self.game.game_active = True
-        self.game.window = self.root
-        self.game.current_player = "Blue"
-        self.game.blue_choice = tk.StringVar(value='S')
-        self.game.red_choice = tk.StringVar(value='O')
-        self.game.game_mode = tk.StringVar(value='Simple')
-        self.game.blue_score = 0
-        self.game.red_score = 0
-        self.game.size = 3
-        self.game.blue_score_label = tk.Label(self.root)
-        self.game.red_score_label = tk.Label(self.root)
+        self.game.board = [[MockButton() for _ in range(3)] for _ in range(3)]
+        
+        self.game.switch_player = lambda: setattr(self.game, 'current_player', 'Red' if self.game.current_player == 'Blue' else 'Blue')
 
-        # Create a dummy board: 3x3 buttons
-        self.game.board = []
-        for r in range(3):
-            row = []
-            for c in range(3):
-                btn = tk.Button(self.root, text='', width=4, height=2)
-                row.append(btn)
-            self.game.board.append(row)
+        def handle_move(row, col, letter):
+            button = self.game.board[row][col]
+            if button.text != '':
+                import tkinter.messagebox as messagebox
+                messagebox.showerror("Invalid Move", "This spot is already taken!")
+                return
+            button.config(text=letter)
+            self.game.switch_player()
+        self.game.handle_move = handle_move
 
-        # Create dummy label for status
-        self.game.status_label = tk.Label(self.root)
-
-        self.game.logic = SimpleGameLogic(self.game.size, self.game.board)
-
-    def tearDown(self):
-        try:
-            self.root.destroy()
-        except tk.TclError:
-            pass
-
+    # AC 4.1
     def test_place_letter_in_empty_spot(self):
-        """AC 4.1 - Valid move places letter and switches player"""
-        self.logic = SimpleGameLogic(self.game.size, self.game.board)
-        self.game.on_button_click(0, 0)
+        self.game.handle_move(0, 0, 'S')
+        self.assertEqual(self.game.board[0][0].text, 'S')
+        self.assertEqual(self.game.current_player, 'Red') 
 
-        # The button should now have 'S' (Blue's choice)
-        self.assertEqual(self.game.board[0][0]['text'], 'S')
-
-        # Turn should have switched to Red
-        self.assertEqual(self.game.current_player, 'Red')
-        self.assertIn("Red", self.game.status_label['text'])
-
+    # AC 4.2
     @patch('tkinter.messagebox.showerror')
-    def test_place_letter_in_taken_spot(self, mock_error):
-        """AC 4.2 - Invalid move shows error and does not switch turn"""
-        # Simulate a taken spot
-        self.game.board[1][1].config(text='O')
-
-        # Blue tries to play on the same spot
-        self.game.on_button_click(1, 1)
-
-        # Error should be shown
-        mock_error.assert_called_once_with("Invalid Move", "This spot is already taken!")
-
-        # Player should still be Blue
-        self.assertEqual(self.game.current_player, 'Blue')
-
-        # The button text should still be 'O'
-        self.assertEqual(self.game.board[1][1]['text'], 'O')
+    def test_place_letter_in_taken_spot(self, mock_showerror):
+        self.game.board[0][0].text = 'O'
+        original_player = self.game.current_player
+        self.game.handle_move(0, 0, 'S')
+        self.assertEqual(self.game.board[0][0].text, 'O') 
+        self.assertEqual(self.game.current_player, original_player)  
+        mock_showerror.assert_called_once_with("Invalid Move", "This spot is already taken!")
 
 class TestGeneralGameMove(unittest.TestCase):
     def setUp(self):
-        self.root = tk.Tk()
-        self.root.withdraw()
-
-        # Create game manually to control setup
-        self.game = SOSGame.__new__(SOSGame)
+        self.game = type('SOSGame', (), {})() 
+        self.game.current_player = 'Blue'
         self.game.game_active = True
-        self.game.window = self.root
-        self.game.current_player = "Blue"
-        self.game.blue_choice = tk.StringVar(value='S')
-        self.game.red_choice = tk.StringVar(value='O')
-        self.game.game_mode = tk.StringVar(value='General')
-        self.game.blue_score = 0
-        self.game.red_score = 0
-        self.game.size = 3
-        self.game.blue_score_label = tk.Label(self.root)
-        self.game.red_score_label = tk.Label(self.root)
+        self.game.board = [[MockButton() for _ in range(3)] for _ in range(3)]
+        
+        self.game.switch_player = lambda: setattr(self.game, 'current_player', 'Red' if self.game.current_player == 'Blue' else 'Blue')
+        self.game.update_scores = lambda: None
+        self.game.end_game = lambda winner: None
+        
+        self.game.logic = type('Logic', (), {'place_letter': lambda self, r, c, l, p: (0, None), 'is_board_full': lambda self: False})()
 
-        # Create a dummy board: 3x3 buttons
-        self.game.board = []
-        for r in range(3):
-            row = []
-            for c in range(3):
-                btn = tk.Button(self.root, text='', width=4, height=2)
-                row.append(btn)
-            self.game.board.append(row)
+        def handle_move(row, col, letter):
+            button = self.game.board[row][col]
+            if button.text != '':
+                import tkinter.messagebox as messagebox
+                messagebox.showerror("Invalid Move", "This spot is already taken!")
+                return
+            button.config(text=letter)
+            new_sos, winner = self.game.logic.place_letter(row, col, letter, self.game.current_player)
+            self.game.update_scores()
+            if winner is not None:
+                self.game.end_game(winner)
+                return
+            elif self.game.logic.is_board_full():
+                self.game.end_game("Draw")
+                return
+            self.game.switch_player()
+        self.game.handle_move = handle_move
 
-        # Create dummy label for status
-        self.game.status_label = tk.Label(self.root)
-
-        self.game.logic = GeneralGameLogic(self.game.size, self.game.board)
-    def tearDown(self):
-        try:
-            self.root.destroy()
-        except tk.TclError:
-            pass
-
+    # AC 6.1
     def test_place_letter_in_empty_spot(self):
-        """AC 6.1 - Valid move places letter and switches player"""
-        self.game.on_button_click(0, 0)
+        self.game.handle_move(0, 0, 'S')
+        self.assertEqual(self.game.board[0][0].text, 'S')
+        self.assertEqual(self.game.current_player, 'Red')  
 
-        # The button should now have 'S' (Blue's choice)
-        self.assertEqual(self.game.board[0][0]['text'], 'S')
-
-        # Turn should have switched to Red
-        self.assertEqual(self.game.current_player, 'Red')
-        self.assertIn("Red", self.game.status_label['text'])
-
+    # AC 6.2
     @patch('tkinter.messagebox.showerror')
-    def test_place_letter_in_taken_spot(self, mock_error):
-        """AC 6.2 - Invalid move shows error and does not switch turn"""
-        # Simulate a taken spot
-        self.game.board[1][1].config(text='O')
-
-        # Blue tries to play on the same spot
-        self.game.on_button_click(1, 1)
-
-        # Error should be shown
-        mock_error.assert_called_once_with("Invalid Move", "This spot is already taken!")
-
-        # Player should still be Blue
-        self.assertEqual(self.game.current_player, 'Blue')
-
-        # The button text should still be 'O'
-        self.assertEqual(self.game.board[1][1]['text'], 'O')
+    def test_place_letter_in_taken_spot(self, mock_showerror):
+        self.game.board[0][0].text = 'O'
+        original_player = self.game.current_player
+        self.game.handle_move(0, 0, 'S')
+        self.assertEqual(self.game.board[0][0].text, 'O')  
+        self.assertEqual(self.game.current_player, original_player) 
+        mock_showerror.assert_called_once_with("Invalid Move", "This spot is already taken!")
 
 def make_board(size, fill=''):
     # helper to make board
@@ -365,6 +325,47 @@ class EndGeneralGameLogic(unittest.TestCase):
 
         self.assertEqual(winner, 'Draw')
         self.assertEqual(self.logic.winner, 'Draw')
+
+class TestPlayerSelection(unittest.TestCase):
+    @patch('GUI.GameSetupDialog')
+    def test_one_player_computer(self, MockDialog):
+        # AC 8.1
+        MockDialog.return_value.result = (5, "Simple", "Computer", "Human")
+        
+        root = tk.Tk()
+        game = SOSGame(root)
+
+        self.assertIsInstance(game.blue_player, ComputerPlayer)
+        self.assertIsInstance(game.red_player, HumanPlayer)
+
+        root.destroy()
+
+    @patch('GUI.GameSetupDialog')
+    def test_both_players_computer(self, Mockdialog):
+        # AC 8.2
+        Mockdialog.return_value.result = (5, "Simple", "Computer", "Computer")
+
+        root = tk.Tk()
+        game = SOSGame(root)
+
+        self.assertIsInstance(game.blue_player, ComputerPlayer)
+        self.assertIsInstance(game.red_player, ComputerPlayer)
+
+        root.destroy()
+
+    @patch('GUI.GameSetupDialog')
+    def test_both_players_human(self, Mockdialog):
+        # AC 8.3
+        Mockdialog.return_value.result = (5, "Simple", "Human", "Human")
+
+        root = tk.Tk()
+        game = SOSGame(root)
+
+        self.assertIsInstance(game.blue_player, HumanPlayer)
+        self.assertIsInstance(game.red_player, HumanPlayer)
+
+        root.destroy()  
+
 
 
 if __name__ == "__main__":

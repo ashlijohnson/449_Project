@@ -1,8 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
-from GameLogic import SimpleGameLogic
-from GameLogic import GeneralGameLogic
-from ComputerPlayer import ComputerPlayer, HumanPlayer
+from GameLogic import SimpleGameLogic, GeneralGameLogic
+from PlayerTypes import ComputerPlayer, HumanPlayer
 
 class SOSGame:
     def __init__(self, window):
@@ -116,10 +115,10 @@ class SOSGame:
             current_player_obj = self.blue_player
         else:
             current_player_obj = self.red_player
-        
+
         if isinstance(current_player_obj, ComputerPlayer):
             return
-        
+
         if self.current_player == "Blue":
             self.handle_move(row, col, self.blue_choice.get())
         else:
