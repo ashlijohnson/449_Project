@@ -21,14 +21,6 @@ class ComputerPlayer(Player):
         if move:
             return move
         
-        if current_player == 'Blue':
-            opponent = 'Red'
-        else:
-            opponent = 'Blue'
-        move = self.block_opponent_winning_move(game_logic, opponent)
-        if move:
-            return move
-        
         return self.make_random_move(game_logic, current_player)
     
     def make_random_move(self, game_logic, current_player):
@@ -45,9 +37,6 @@ class ComputerPlayer(Player):
     
     def make_winning_move(self, game_logic, player):
         return self.find_sos_move(game_logic, player)
-    
-    def block_opponent_winning_move(self, game_logic, opponent):
-        return self.find_sos_move(game_logic, opponent)
     
     def find_sos_move(self, game_logic, player):
         size = game_logic.size
