@@ -174,20 +174,6 @@ class SOSGame:
         row, col, letter = move 
         self.handle_move(row, col, letter)
 
-    def perform_computer_move(self, player_obj):
-        if not self.game_active:
-            return
-
-        move = player_obj.make_move(self.logic, self.current_player)
-        
-        if move is None:
-            if self.logic.is_board_full():
-                self.end_game("Draw")
-            return
-
-        row, col, letter = move
-        self.handle_move(row, col, letter)
-
     def play_turn(self):
         if self.current_player == "Blue":
             player = self.blue_player
@@ -198,8 +184,6 @@ class SOSGame:
             return
         else:
             self.window.after(500, lambda: self.computer_move())
-
-
 
     def end_game(self, winner):
         self.game_active = False
@@ -236,8 +220,6 @@ class SOSGame:
             self.logic = GeneralGameLogic(self.size, [['' for _ in range(self.size)] for _ in range(self.size)])
         
         self.setup_menu()
-
-
 
 class GameSetupDialog:
     def __init__(self, parent):
