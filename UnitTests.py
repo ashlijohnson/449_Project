@@ -3,7 +3,7 @@ from GUI import GameSetupDialog
 from GUI import SOSGame
 from unittest.mock import patch, MagicMock
 import tkinter as tk
-from GameLogic import SimpleGameLogic, GeneralGameLogic
+from GameLogic import SimpleGameLogic, GeneralGameLogic, BaseGameLogic
 from PlayerTypes import HumanPlayer, ComputerPlayer
 
 class TestBoardSizeValidation(unittest.TestCase):
@@ -366,7 +366,45 @@ class TestPlayerSelection(unittest.TestCase):
 
         root.destroy()  
 
+class TestComputerPlayer(unittest.TestCase):
+    def setUp(self):
+        self.cpu = ComputerPlayer("Blue")
 
+    # AC 9.1 
+    def test_computer_finds_sos(self):
+        board = [
+            ['S', '', 'S'],
+            ['', '', ''],
+            ['', '', '']
+        ]
+        size = 3
+        game_logic = BaseGameLogic(size, board)
+        
+        move = self.cpu.make_move(game_logic, 'Blue')
+        row, col, letter = move
+
+        self.assertEqual((row, col, letter), (0, 1, 'O'))
+
+    # AC 9.2 
+    def test_computer_random_move_no_sos(self):
+        board = [
+            ['S', 'O', 'S'],
+            ['O', 'S', 'O'],
+            ['', '', '']
+        ]
+        size = 3
+        game_logic = BaseGameLogic(size, board)
+
+        import random
+        original_choice = random.choice
+        try:
+            random.choice = lambda x: x[0]  
+            move = self.cpu.make_move(game_logic, 'Blue')
+            row, col, letter = move
+            self.assertEqual((row, col), (2,0))
+            self.assertIn(letter, ['S','O'])
+        finally:
+            random.choice = original_choice
 
 if __name__ == "__main__":
     unittest.main()
