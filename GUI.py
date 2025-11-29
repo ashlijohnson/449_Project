@@ -237,7 +237,7 @@ class SOSGame:
            self.logic = SimpleGameLogic(self.size, [['' for _ in range(self.size)] for _ in range(self.size)])
         else:
             self.logic = GeneralGameLogic(self.size, [['' for _ in range(self.size)] for _ in range(self.size)])
-        
+
         self.setup_menu()
 
     def save_game(self):

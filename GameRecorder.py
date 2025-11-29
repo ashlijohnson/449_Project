@@ -11,13 +11,16 @@ class GameRecorder:
         if not self.moves:
             print("nothing to save")
             return
-        
+    
         with open(filename, "w") as f:
             for key, value in self.metadata.items():
                 f.write(f"{key}={value}\n")
             f.write("\n")
             for row, col, letter, player in self.moves:
                 f.write(f"{row}, {col}, {letter}, {player}\n")
+
+        self.moves = []
+        self.move_index = 0
 
     def load_from_file(self, filename="saved_game.txt"):
         lines = open(filename).read().strip().split("\n")
