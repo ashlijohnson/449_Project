@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from GameLogic import SimpleGameLogic, GeneralGameLogic
 from PlayerTypes import ComputerPlayer, HumanPlayer
+from GameRecorder import GameRecorder
 
 class SOSGame:
     def __init__(self, window):
@@ -20,6 +21,8 @@ class SOSGame:
         self.red_choice = tk.StringVar(value='S')
 
         self.logic_board = [['' for _ in range(self.size)] for _ in range(self.size)]
+
+        self.recorder = GameRecorder()
 
         self.setup_menu()
 
@@ -42,6 +45,13 @@ class SOSGame:
             self.red_player = ComputerPlayer("Red")
         else: 
             self.red_player = HumanPlayer("Red")
+
+        self.recorder.metadata = {
+            "size": self.size,
+            "mode": self.game_mode.get(),
+            "blue": type(self.blue_player).__name__,
+            "red": type(self.red_player).__name__
+        }
 
         self.create_board()
 
@@ -131,6 +141,7 @@ class SOSGame:
 
         new_sos, winner = self.logic.place_letter(row, col, letter, self.current_player)
         self.update_scores()
+        self.recorder.record_move(row, col, letter, self.current_player)
 
         if winner is not None:
             self.end_game(winner)
@@ -224,6 +235,12 @@ class SOSGame:
             self.logic = GeneralGameLogic(self.size, [['' for _ in range(self.size)] for _ in range(self.size)])
         
         self.setup_menu()
+
+    def save_game(self):
+        self.recorder.load_from_file()
+        messagebox.showinfo("Saved", "Game saved!")
+
+    
 
 class GameSetupDialog:
     def __init__(self, parent):
