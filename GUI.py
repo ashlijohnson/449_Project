@@ -106,6 +106,10 @@ class SOSGame:
         new_game_btn = tk.Button(self.window, text = "New Game", command=self.new_game, font=('Arial', 12))
         new_game_btn.grid(row=3, column=0, columnspan=3, pady=10)
 
+        #save game
+        save_game = tk.Button(self.window, text= "Save Game", command=self.save_game, font=('Arial', 12))
+        save_game.grid(row=5, column=0, columnspan=3, pady= 10)
+
         self.logic_board = [['' for _ in range(self.size)] for _ in range(self.size)]
         if self.game_mode.get() == 'Simple':
             self.logic = SimpleGameLogic(self.size, self.logic_board)
@@ -237,10 +241,35 @@ class SOSGame:
         self.setup_menu()
 
     def save_game(self):
-        self.recorder.load_from_file()
+        self.recorder.save_to_file()
         messagebox.showinfo("Saved", "Game saved!")
 
-    
+    def reset_board(self):
+        for row in range(self.size):
+            for col in range(self.size):
+                self.cells[row][col].config(bg="white") 
+
+    def place_token_replay(self, color, row, col):
+        widget = self.cells[row][col]
+
+    def start_replay(self):
+        self.reset_board()
+        self.recorder.move_index = 0
+        self.is_replay_mode = True
+        self.status_label.config(text= "Replay: Ready")
+
+        print("Replay started. Moves:", len(self.recorder.moves))
+
+    def replay_next_move(self):
+        if self.recorder.move_index >= len(self.recorder.moves):
+            self.status_label.config(text="Replay finished!")
+            return
+        
+        color, row, col = self.recorder.moves[self.recorder.move_index]
+        
+        self.place_token_replay(color, row, col)
+
+        self.recorder.move_index += 1
 
 class GameSetupDialog:
     def __init__(self, parent):

@@ -5,9 +5,13 @@ class GameRecorder:
         self.move_index = 0
 
     def record_move(self, row, col, letter, player):
-        self.moves.append(row, col, letter, player)
+        self.moves.append((row, col, letter, player))
 
     def save_to_file(self, filename="saved_game.txt"):
+        if not self.moves:
+            print("nothing to save")
+            return
+        
         with open(filename, "w") as f:
             for key, value in self.metadata.items():
                 f.write(f"{key}={value}\n")
