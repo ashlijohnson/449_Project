@@ -102,9 +102,6 @@ class SOSGame:
         else:
             self.logic = GeneralGameLogic(self.size, self.logic_board)
 
-        if self.current_player == "Blue" and isinstance(self.blue_player, ComputerPlayer):
-            self.window.after(500, self.computer_move)
-
         self.play_turn()
 
     def on_button_click(self, row, col):
@@ -143,6 +140,16 @@ class SOSGame:
             return
         
         self.switch_player()
+        
+        if self.current_player == "Blue":
+            next_player_obj = self.blue_player
+        else:
+            next_player_obj = self.red_player
+
+        if isinstance(next_player_obj, ComputerPlayer):
+            self.window.after(500, self.computer_move)
+        else:
+            return
 
     def update_scores(self):
         self.blue_score_label.config(text=f"Score: {self.logic.get_score('Blue')}")
@@ -151,8 +158,6 @@ class SOSGame:
     def switch_player(self):
         self.current_player = "Red" if self.current_player=='Blue' else "Blue"
         self.status_label.config(text=f"Current Turn: {self.current_player}")
-
-        self.play_turn()
 
     def computer_move(self):
         if not self.game_active:

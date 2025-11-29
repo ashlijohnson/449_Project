@@ -389,7 +389,7 @@ class TestComputerPlayer(unittest.TestCase):
     def test_computer_random_move_no_sos(self):
         board = [
             ['S', 'O', 'S'],
-            ['O', 'S', 'O'],
+            ['S', 'S', 'S'],
             ['', '', '']
         ]
         size = 3
